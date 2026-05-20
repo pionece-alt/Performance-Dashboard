@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lucky 🍀</title>
+<style>
+:root {
+  --bg: #f6f7fb;
+  --card: #ffffff;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --primary: #10b981;
+  --primary-dark: #059669;
+  --border: #e5e7eb;
+  --accent: #f59e0b;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; background: var(--card); border-bottom: 1px solid var(--border); }
+.logo { font-size: 1.4rem; font-weight: 700; cursor: pointer; }
+nav { display: flex; gap: 1.5rem; }
+nav a { cursor: pointer; color: var(--muted); font-weight: 500; }
+nav a.active { color: var(--primary-dark); }
+.main { padding: 2rem; max-width: 1200px; margin: 0 auto; }
+.search-bar { margin-bottom: 1.5rem; }
+.search-bar input { width: 100%; padding: 0.65rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; }
+.search-bar input:focus { outline: 2px solid var(--primary); border-color: transparent; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; cursor: pointer; transition: box-shadow 0.15s, transform 0.15s; }
+.card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); transform: translateY(-2px); }
+.card h3 { margin: 0 0 0.25rem 0; }
+.category { font-size: 0.8rem; color: var(--primary-dark); background: #d1fae5; padding: 2px 8px; border-radius: 999px; display: inline-block; margin-bottom: 0.5rem; }
+.desc { color: var(--muted); font-size: 0.9rem; margin: 0; }
+.promo-badge { background: var(--accent); color: white; padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem; }
+.form { background: var(--card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.75rem; max-width: 600px; margin-bottom: 1.5rem; }
+.form h2 { margin: 0 0 0.5rem 0; }
+.form label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.9rem; color: var(--muted); }
+.form input, .form textarea, .form select { padding: 0.55rem 0.75rem; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; font-family: inherit; }
+.form textarea { min-height: 80px; resize: vertical; }
+.btn { padding: 0.65rem 1.2rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+.btn:hover { background: var(--primary-dark); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); }
+.tabs button { background: none; border: none; padding: 0.75rem 1rem; cursor: pointer; font-size: 1rem; color: var(--muted); border-bottom: 2px solid transparent; }
+.tabs button.active { color: var(--primary-dark); border-bottom-color: var(--primary); }
+.empty { text-align: center; color: var(--muted); padding: 2rem; }
+.loading { text-align: center; padding: 2rem; color: var(--muted); }
+.error { background: #fee2e2; color: #ef4444; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; }
+.success { background: #d1fae5; color: var(--primary-dark); padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.stat-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; text-align: center; }
+.stat-box .value { font-size: 2rem; font-weight: 700; color: var(--primary-dark); }
+.stat-box .label { color: var(--muted); font-size: 0.85rem; margin-top: 0.25rem; }
+.promo-item, .product-item { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; }
+.promo-item .title { font-weight: 600; }
+.promo-item .discount { color: var(--accent); font-weight: 700; margin-left: 0.5rem; }
+.promo-item .meta, .product-item .meta { font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem; }
+.back { display: inline-block; color: var(--primary-dark); cursor: pointer; margin-bottom: 1rem; }
+.section { margin-top: 1.5rem; }
+.section h2 { margin-bottom: 0.75rem; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo" onclick="go('home')">🍀 Lucky</div>
+  <nav id="nav"></nav>
+</div>
+<div class="main" id="view"><div class="loading">Đang tải...</div></div>
+
+<script>
+const state = { page: 'home', brandId: null, brandTab: 'promotions', filter: '', message: null };
+
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function fmtDate(s) {
+  if (!s) return '';
+  try {
+    const d = new Date(s);
+    if (isNaN(d.getTime())) return s;
+    return d.toLocaleDateString('vi-VN');
+  } catch (e) { return s; }
+}
+
+function go(page, brandId) {
+  state.page = page;
+  if (brandId !== undefined) state.brandId = brandId;
+  state.message = null;
+  render();
+}
+
+function renderNav() {
+  const items = [['home','Trang chủ'],['add','Thêm dữ liệu'],['stats','Thống kê']];
+  document.getElementById('nav').innerHTML = items
+    .map(([p,l]) => '<a class="' + (state.page === p || (p === 'home' && state.page === 'brand') ? 'active' : '') + '" onclick="go(\'' + p + '\')">' + l + '</a>')
+    .join('');
+}
+
+function render() {
+  renderNav();
+  const v = document.getElementById('view');
+  if (state.page === 'home') renderHome(v);
+  else if (state.page === 'brand') renderBrand(v);
+  else if (state.page === 'add') renderAdd(v);
+  else if (state.page === 'stats') renderStats(v);
+}
+
+function showError(msg) {
+  return '<div class="error">' + esc(msg) + '</div>';
+}
+function showSuccess(msg) {
+  return '<div class="success">' + esc(msg) + '</div>';
+}
+
+// ---------- HOME ----------
+function renderHome(v) {
+  v.innerHTML = '<div class="loading">Đang tải danh sách brand...</div>';
+  google.script.run
+    .withSuccessHandler((brands) => drawHome(v, brands))
+    .withFailureHandler((err) => { v.innerHTML = showError(err.message || err); })
+    .listBrands();
+}
+
+function drawHome(v, brands) {
+  const filter = (state.filter || '').toLowerCase();
+  const filtered = filter
+    ? brands.filter((b) => [b.name, b.category, b.description].join(' ').toLowerCase().includes(filter))
+    : brands;
+  const cards = filtered.map((b) => (
+    '<div class="card" onclick="go(\'brand\', \'' + esc(b.id) + '\')">' +
+      '<h3>' + esc(b.name) +
+        (b.promotion_count > 0 ? '<span class="promo-badge">' + b.promotion_count + ' KM</span>' : '') +
+      '</h3>' +
+      (b.category ? '<div class="category">' + esc(b.category) + '</div>' : '') +
+      '<p class="desc">' + esc(b.description || '') + '</p>' +
+    '</div>'
+  )).join('');
+  v.innerHTML =
+    '<div class="search-bar"><input id="search" placeholder="Tìm theo tên, danh mục, mô tả..." value="' + esc(state.filter) + '"></div>' +
+    (filtered.length === 0 ? '<div class="empty">' + (filter ? 'Không có brand khớp.' : 'Chưa có brand nào — vào "Thêm dữ liệu" để tạo.') + '</div>' : '<div class="grid">' + cards + '</div>');
+  const inp = document.getElementById('search');
+  inp.oninput = (e) => { state.filter = e.target.value; drawHome(v, brands); document.getElementById('search').focus(); };
+  inp.focus();
+  inp.setSelectionRange(inp.value.length, inp.value.length);
+}
+
+// ---------- BRAND DETAIL ----------
+function renderBrand(v) {
+  v.innerHTML = '<div class="loading">Đang tải brand...</div>';
+  const id = state.brandId;
+  google.script.run.withSuccessHandler((brand) => {
+    if (!brand) { v.innerHTML = '<div class="empty">Không tìm thấy brand.</div>'; return; }
+    google.script.run.withSuccessHandler((promos) => {
+      google.script.run.withSuccessHandler((products) => {
+        drawBrand(v, brand, promos, products);
+      }).listProducts(id);
+    }).listPromotions(id);
+  }).withFailureHandler((err) => { v.innerHTML = showError(err.message || err); }).getBrand(id);
+}
+
+function drawBrand(v, brand, promos, products) {
+  const isPromo = state.brandTab === 'promotions';
+  let listHtml = '';
+  if (isPromo) {
+    listHtml = promos.length === 0 ? '<div class="empty">Chưa có khuyến mãi.</div>' :
+      promos.map((p) =>
+        '<div class="promo-item"><span class="title">' + esc(p.title) + '</span>' +
+        (p.discount_percent ? '<span class="discount">-' + esc(p.discount_percent) + '%</span>' : '') +
+        '<div class="meta">' + fmtDate(p.start_date) + ' → ' + fmtDate(p.end_date) + '</div>' +
+        (p.description ? '<div class="meta">' + esc(p.description) + '</div>' : '') +
+        '</div>'
+      ).join('');
+  } else {
+    listHtml = products.length === 0 ? '<div class="empty">Chưa có sản phẩm.</div>' :
+      products.map((p) =>
+        '<div class="product-item"><span class="title">' + esc(p.name) + '</span>' +
+        (p.price ? ' — ' + Number(p.price).toLocaleString('vi-VN') + 'đ' : '') +
+        (p.description ? '<div class="meta">' + esc(p.description) + '</div>' : '') +
+        '</div>'
+      ).join('');
+  }
+  v.innerHTML =
+    '<span class="back" onclick="go(\'home\')">← Quay lại</span>' +
+    '<h1>' + esc(brand.name) + '</h1>' +
+    (brand.category ? '<div class="category">' + esc(brand.category) + '</div>' : '') +
+    '<p>' + esc(brand.description || '') + '</p>' +
+    '<div class="tabs">' +
+      '<button class="' + (isPromo ? 'active' : '') + '" onclick="state.brandTab=\'promotions\';render()">Khuyến mãi (' + promos.length + ')</button>' +
+      '<button class="' + (!isPromo ? 'active' : '') + '" onclick="state.brandTab=\'products\';render()">Sản phẩm (' + products.length + ')</button>' +
+    '</div>' +
+    listHtml;
+}
+
+// ---------- ADD ----------
+function renderAdd(v) {
+  v.innerHTML = '<div class="loading">Đang tải...</div>';
+  google.script.run.withSuccessHandler((brands) => {
+    drawAdd(v, brands);
+  }).listBrands();
+}
+
+function drawAdd(v, brands) {
+  const opts = brands.map((b) => '<option value="' + esc(b.id) + '">' + esc(b.name) + '</option>').join('');
+  v.innerHTML =
+    (state.message ? (state.message.type === 'error' ? showError(state.message.text) : showSuccess(state.message.text)) : '') +
+    '<form class="form" onsubmit="submitBrand(event)">' +
+      '<h2>Thêm brand</h2>' +
+      '<label>Tên brand <input name="name" required></label>' +
+      '<label>Danh mục <input name="category"></label>' +
+      '<label>Mô tả <textarea name="description"></textarea></label>' +
+      '<button class="btn" type="submit">Lưu brand</button>' +
+    '</form>' +
+    (brands.length === 0 ? '<div class="empty">Thêm brand trước để có thể thêm sản phẩm/khuyến mãi.</div>' :
+    '<form class="form" onsubmit="submitProduct(event)">' +
+      '<h2>Thêm sản phẩm</h2>' +
+      '<label>Brand <select name="brand_id" required>' + opts + '</select></label>' +
+      '<label>Tên sản phẩm <input name="name" required></label>' +
+      '<label>Giá <input name="price" type="number" min="0"></label>' +
+      '<label>Mô tả <textarea name="description"></textarea></label>' +
+      '<button class="btn" type="submit">Lưu sản phẩm</button>' +
+    '</form>' +
+    '<form class="form" onsubmit="submitPromotion(event)">' +
+      '<h2>Thêm khuyến mãi</h2>' +
+      '<label>Brand <select name="brand_id" required>' + opts + '</select></label>' +
+      '<label>Tiêu đề <input name="title" required></label>' +
+      '<label>Mô tả <textarea name="description"></textarea></label>' +
+      '<label>% giảm giá <input name="discount_percent" type="number" min="0" max="100"></label>' +
+      '<label>Ngày bắt đầu <input name="start_date" type="date"></label>' +
+      '<label>Ngày kết thúc <input name="end_date" type="date"></label>' +
+      '<button class="btn" type="submit">Lưu khuyến mãi</button>' +
+    '</form>');
+}
+
+function formData(form) {
+  const obj = {};
+  new FormData(form).forEach((v, k) => { obj[k] = v; });
+  return obj;
+}
+
+function submitBrand(e) {
+  e.preventDefault();
+  const btn = e.target.querySelector('button');
+  btn.disabled = true; btn.textContent = 'Đang lưu...';
+  google.script.run
+    .withSuccessHandler(() => { state.message = { type: 'success', text: 'Đã thêm brand!' }; render(); })
+    .withFailureHandler((err) => { state.message = { type: 'error', text: err.message || err }; render(); })
+    .addBrand(formData(e.target));
+}
+
+function submitProduct(e) {
+  e.preventDefault();
+  const btn = e.target.querySelector('button');
+  btn.disabled = true; btn.textContent = 'Đang lưu...';
+  google.script.run
+    .withSuccessHandler(() => { state.message = { type: 'success', text: 'Đã thêm sản phẩm!' }; render(); })
+    .withFailureHandler((err) => { state.message = { type: 'error', text: err.message || err }; render(); })
+    .addProduct(formData(e.target));
+}
+
+function submitPromotion(e) {
+  e.preventDefault();
+  const btn = e.target.querySelector('button');
+  btn.disabled = true; btn.textContent = 'Đang lưu...';
+  google.script.run
+    .withSuccessHandler(() => { state.message = { type: 'success', text: 'Đã thêm khuyến mãi!' }; render(); })
+    .withFailureHandler((err) => { state.message = { type: 'error', text: err.message || err }; render(); })
+    .addPromotion(formData(e.target));
+}
+
+// ---------- STATS ----------
+function renderStats(v) {
+  v.innerHTML = '<div class="loading">Đang tính thống kê...</div>';
+  google.script.run
+    .withSuccessHandler((s) => drawStats(v, s))
+    .withFailureHandler((err) => { v.innerHTML = showError(err.message || err); })
+    .computeStats();
+}
+
+function drawStats(v, s) {
+  const boxes = [
+    ['Tổng brand', s.total_brands],
+    ['Tổng sản phẩm', s.total_products],
+    ['Tổng khuyến mãi', s.total_promotions],
+    ['KM đang chạy', s.active_promotions],
+    ['% giảm TB', s.avg_discount ? s.avg_discount.toFixed(1) + '%' : '0%'],
+  ];
+  const top = (s.top_brands || []).map((b) =>
+    '<div class="promo-item"><span class="title">' + esc(b.name) + '</span> — ' + b.promotion_count + ' KM</div>'
+  ).join('') || '<div class="empty">Chưa có dữ liệu.</div>';
+  const cat = (s.by_category || []).map((c) =>
+    '<div class="promo-item"><span class="title">' + esc(c.category || '(không có)') + '</span> — ' + c.count + ' KM</div>'
+  ).join('') || '<div class="empty">Chưa có dữ liệu.</div>';
+  v.innerHTML =
+    '<div class="stats-grid">' +
+      boxes.map(([l, val]) => '<div class="stat-box"><div class="value">' + esc(val) + '</div><div class="label">' + esc(l) + '</div></div>').join('') +
+    '</div>' +
+    '<div class="section"><h2>Top brand theo số KM</h2>' + top + '</div>' +
+    '<div class="section"><h2>KM theo danh mục</h2>' + cat + '</div>';
+}
+
+render();
+</script>
+</body>
+</html>
