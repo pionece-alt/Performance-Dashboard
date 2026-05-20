@@ -1,14 +1,15 @@
 /**
- * Lucky - Google Apps Script backend
+ * Lucky - Google Apps Script backend + frontend (single-deploy mode)
  *
  * Cài đặt:
  * 1. Tạo Google Sheet mới, copy ID từ URL.
- * 2. Mở Extensions > Apps Script, dán toàn bộ file này.
- * 3. Cập nhật SHEET_ID bên dưới.
- * 4. Chạy hàm `setupSheets()` 1 lần để tạo header cho 3 sheet:
- *    "Brands", "Products", "Promotions".
- * 5. Deploy > New deployment > Web app > Execute as: Me, Access: Anyone.
- * 6. Copy URL web app, dán vào VITE_APPS_SCRIPT_URL trong .env của frontend.
+ * 2. Mở Extensions > Apps Script.
+ * 3. Dán nội dung file này vào "Code.gs".
+ * 4. Tạo file HTML mới tên "Index" (File > New > HTML file), dán nội dung Index.html.
+ * 5. Cập nhật SHEET_ID bên dưới.
+ * 6. Chạy hàm `setupSheets()` 1 lần để tạo header 3 sheet.
+ * 7. Deploy > New deployment > Web app > Execute as: Me, Access: Anyone.
+ * 8. Mở URL deploy => toàn bộ web Lucky chạy ngay tại đó.
  */
 
 const SHEET_ID = 'PASTE_YOUR_GOOGLE_SHEET_ID_HERE';
@@ -32,6 +33,12 @@ function setupSheets() {
 }
 
 function doGet(e) {
+  const action = e && e.parameter && e.parameter.action;
+  if (!action) {
+    return HtmlService.createTemplateFromFile('Index').evaluate()
+      .setTitle('Lucky 🍀')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
   return handle(e, null);
 }
 
